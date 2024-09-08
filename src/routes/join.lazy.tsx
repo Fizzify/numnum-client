@@ -8,7 +8,7 @@ export const Route = createLazyFileRoute("/join")({
   component: JoinComponent,
 });
 
-export const socket = io("http://localhost:3001");
+export const socket = io("https://numnum-server-production.up.railway.app");
 
 function JoinComponent() {
   const [roomCode, setRoomCode] = useState("");

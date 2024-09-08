@@ -11,7 +11,7 @@ export const Route = createFileRoute("/r/$roomId")({
   component: RoomComponent,
 });
 
-export const socket = io("http://localhost:3001");
+export const socket = io("https://numnum-server-production.up.railway.app/");
 
 type SearchType = {
   waiting: boolean;
@@ -29,13 +29,15 @@ function RoomComponent() {
   });
 
   const [heading, setHeading] = useState("");
+  const [headingColor, setHeadingColor] = useState<"white" | "red" | "green">(
+    "white"
+  );
   const [isWaiting, setIsWaiting] = useState(true);
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [isCountdown, setIsCountdown] = useState(false);
   const [currentProblem, setCurrentProblem] = useState(0);
   const [problemPairs, setProblemPairs] = useState<number[][]>([[]]);
   const [answerValue, setAnswerValue] = useState("");
-  // const [play] = useSound();
 
   const controls = useAnimationControls();
 
@@ -96,17 +98,26 @@ function RoomComponent() {
       setIsGameStarted(true);
       setProblemPairs(pairs);
       setIsCountdown(true);
+      console.log(pairs);
     };
 
     const handleDecideGame = (userId: string) => {
       setIsGameStarted(false);
-      const randomMessageNumber = Math.round(Math.random() * 50 - 1);
+      const randomMessageNumber = Math.round(Math.random() * 50);
+
+      const isWinner = userId === socket.id;
+
       setHeading(
-        userId === socket.id
+        isWinner
           ? winning.messages[randomMessageNumber]
           : losing.messages[randomMessageNumber]
       );
-      console.log(userId === socket.id);
+
+      console.log(randomMessageNumber);
+
+      console.log(winning.messages[randomMessageNumber]);
+      console.log(losing.messages[randomMessageNumber]);
+      setHeadingColor(isWinner ? "green" : "red");
     };
 
     socket.on("join-success", handleJoinSuccess);
@@ -128,13 +139,21 @@ function RoomComponent() {
         <DefaultLayout>
           {!isGameStarted ? (
             <>
-              <h1 className="text-4xl font-bold text-center">{heading}</h1>
+              <h1
+                className="text-4xl font-bold text-center"
+                style={{
+                  color: headingColor,
+                }}
+              >
+                {heading}
+              </h1>
               <h2>{!search && "Waiting for host"}</h2>
               <div className="my-4" />
               <button
                 className="px-4 py-2 text-neutral-400 bg-neutral-700"
                 onClick={handleCopyLink}
               >{`${roomLink} 📋`}</button>
+              <div className="my-4" />
               {search && !isWaiting && (
                 <button
                   className="px-4 py-1 bg-yellow-300 text-black"
@@ -167,6 +186,8 @@ function RoomComponent() {
                   {">"}
                 </button>
               </motion.form>
+              <div className="my-4" />
+              <span>Problem Number {currentProblem + 1}</span>
             </>
           )}
         </DefaultLayout>
