@@ -1,6 +1,6 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import DefaultLayout from "../layout/default";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { motion, useAnimationControls } from "framer-motion";
 import winning from "../messages/winning.json";
