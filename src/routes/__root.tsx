@@ -6,7 +6,7 @@ export const Route = createRootRoute({
   component: () => (
     <>
       <Toaster position="top-center" />
-      <div className="p-2 flex gap-4 text-center justify-center">
+      <div className="p-4 flex gap-4 text-center justify-center">
         <Link to="/" className="[&.active]:font-bold">
           Home
         </Link>
@@ -14,7 +14,7 @@ export const Route = createRootRoute({
           Join
         </Link>
       </div>
-      <hr />
+      <hr className="border-none bg-white h-0.5" />
       <Outlet />
       <TanStackRouterDevtools />
     </>

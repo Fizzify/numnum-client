@@ -1,16 +1,18 @@
-import { createLazyFileRoute } from "@tanstack/react-router";
+import { createLazyFileRoute, useNavigate } from "@tanstack/react-router";
 import DefaultLayout from "../layout/default";
 import { useEffect, useState } from "react";
-import { socket } from "../socket";
 import toast from "react-hot-toast";
-import { isValidUrl } from "../util";
+import { io } from "socket.io-client";
 
 export const Route = createLazyFileRoute("/join")({
   component: JoinComponent,
 });
 
+export const socket = io("http://localhost:3001");
+
 function JoinComponent() {
   const [roomCode, setRoomCode] = useState("");
+  const navigate = useNavigate();
 
   const handlePaste = async () => {
     const text = await navigator.clipboard.readText();
@@ -22,22 +24,30 @@ function JoinComponent() {
   };
 
   const handleRoomJoin = () => {
-    if (isValidUrl(roomCode)) {
+    try {
       const url = new URL(roomCode);
 
       const pathname = url.pathname;
 
       const slug = pathname.split("/").pop();
 
-      socket.emit("join-existing", slug);
-    } else {
-      socket.emit("join-existing", roomCode);
+      socket.emit("join", slug);
+    } catch {
+      socket.emit("join", roomCode);
     }
   };
 
   useEffect(() => {
     socket.on("join-success", (roomId) => {
       toast.success(`Joined: ${roomId}`);
+
+      navigate({
+        to: "/r/$roomId",
+        params: { roomId },
+        search: {
+          waiting: false,
+        },
+      });
     });
 
     socket.on("join-fail", () => {

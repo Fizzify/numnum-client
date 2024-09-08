@@ -12,7 +12,11 @@ function Index() {
       <h3 className="text-4xl font-bold">Welcome to numnum!</h3>
       <div className="my-4"></div>
       <div>
-        <Link to="/r/$roomId" params={{ roomId: nanoid() }}>
+        <Link
+          to="/r/$roomId"
+          params={{ roomId: nanoid() }}
+          search={{ waiting: true }}
+        >
           <button className="px-4 py-1 bg-yellow-300 text-black">Create</button>
         </Link>
         <Link to="/join">
