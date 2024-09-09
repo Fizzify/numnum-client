@@ -12,7 +12,7 @@ export const Route = createFileRoute("/r/$roomId")({
   component: RoomComponent,
 });
 
-export const socket = io("https://numnum-server-production.up.railway.app/");
+export const socket = io(import.meta.env.VITE_API_URL);
 
 type SearchType = {
   waiting: boolean;
@@ -167,9 +167,14 @@ function RoomComponent() {
           ) : (
             <>
               <img
-                width={50}
-                height={50}
+                width={100}
+                height={100}
                 src={`/monsters/${renderedProblem.image}`}
+                alt="Monster."
+                style={{
+                  imageRendering: "pixelated",
+                  filter: "sepia(100%) hue-rotate(-50deg) saturate(1000%)",
+                }}
               />
               <h1 className="text-4xl font-bold text-center">{`${renderedProblem.numOne} + ${renderedProblem.numTwo}`}</h1>
               <div className="my-4" />
