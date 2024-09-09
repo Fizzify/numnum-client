@@ -6,6 +6,7 @@ import { motion, useAnimationControls } from "framer-motion";
 import winning from "../messages/winning.json";
 import losing from "../messages/losing.json";
 import CountdownTimer from "../extra/countdown-timer";
+import { PairType } from "../types/pair";
 
 export const Route = createFileRoute("/r/$roomId")({
   component: RoomComponent,
@@ -36,7 +37,7 @@ function RoomComponent() {
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [isCountdown, setIsCountdown] = useState(false);
   const [currentProblem, setCurrentProblem] = useState(0);
-  const [problemPairs, setProblemPairs] = useState<number[][]>([[]]);
+  const [problemPairs, setProblemPairs] = useState<PairType[]>([]);
   const [answerValue, setAnswerValue] = useState("");
 
   const controls = useAnimationControls();
@@ -58,7 +59,7 @@ function RoomComponent() {
   const handleSubmitAnswer = (e: React.FormEvent) => {
     e.preventDefault();
     if (currentProblem >= problemPairs.length - 1) return handleEndGame();
-    if (Number(answerValue) === renderedProblem[2]) {
+    if (Number(answerValue) === renderedProblem.answer) {
       setCurrentProblem((prev) => prev + 1);
       setAnswerValue("");
     } else {
@@ -103,7 +104,7 @@ function RoomComponent() {
 
     const handleDecideGame = (userId: string) => {
       setIsGameStarted(false);
-      const randomMessageNumber = Math.round(Math.random() * 50);
+      const randomMessageNumber = Math.round(Math.random() * 49);
 
       const isWinner = userId === socket.id;
 
@@ -165,7 +166,12 @@ function RoomComponent() {
             </>
           ) : (
             <>
-              <h1 className="text-4xl font-bold text-center">{`${renderedProblem[0]} + ${renderedProblem[1]}`}</h1>
+              <img
+                width={50}
+                height={50}
+                src={`/monsters/${renderedProblem.image}`}
+              />
+              <h1 className="text-4xl font-bold text-center">{`${renderedProblem.numOne} + ${renderedProblem.numTwo}`}</h1>
               <div className="my-4" />
               <motion.form
                 className="bg-neutral-700"
