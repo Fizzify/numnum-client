@@ -7,6 +7,9 @@ import winning from "../messages/winning.json";
 import losing from "../messages/losing.json";
 import CountdownTimer from "../extra/countdown-timer";
 import { PairType } from "../types/pair";
+import Loader from "../extra/loader";
+import Button from "../primitive/button";
+import HealthBar from "../extra/health-bar";
 
 export const Route = createFileRoute("/r/$roomId")({
   component: RoomComponent,
@@ -39,6 +42,9 @@ function RoomComponent() {
   const [currentProblem, setCurrentProblem] = useState(0);
   const [problemPairs, setProblemPairs] = useState<PairType[]>([]);
   const [answerValue, setAnswerValue] = useState("");
+  const [monsterHealth, setMonsterHealth] = useState(100);
+  const [oppositeMonsterHealth, setOppositeMonsterHealth] = useState(100);
+  const hitAnimControls = useAnimationControls();
 
   const controls = useAnimationControls();
 
@@ -62,6 +68,15 @@ function RoomComponent() {
     if (Number(answerValue) === renderedProblem.answer) {
       setCurrentProblem((prev) => prev + 1);
       setAnswerValue("");
+      setMonsterHealth((prev) => prev - 10);
+
+      hitAnimControls.start({
+        y: [-20, 5],
+        opacity: [1, 1, 1, 0],
+        transition: {
+          duration: 1,
+        },
+      });
     } else {
       controls.start({
         x: [5, 0, 5, 0],
@@ -99,7 +114,8 @@ function RoomComponent() {
       setIsGameStarted(true);
       setProblemPairs(pairs);
       setIsCountdown(true);
-      console.log(pairs);
+      setMonsterHealth(100);
+      setOppositeMonsterHealth(100);
     };
 
     const handleDecideGame = (userId: string) => {
@@ -114,32 +130,69 @@ function RoomComponent() {
           : losing.messages[randomMessageNumber]
       );
 
-      console.log(randomMessageNumber);
-
-      console.log(winning.messages[randomMessageNumber]);
-      console.log(losing.messages[randomMessageNumber]);
       setHeadingColor(isWinner ? "green" : "red");
+    };
+
+    const handleDamageMonster = (userId: string, monsterHealthLeft: number) => {
+      const isHitter = userId === socket.id;
+
+      if (!isHitter) setOppositeMonsterHealth(monsterHealthLeft);
     };
 
     socket.on("join-success", handleJoinSuccess);
     socket.on("player-join", handlePlayerJoin);
     socket.on("generate-pairs", handleGeneratePairs);
     socket.on("decide-game", handleDecideGame);
+    socket.on("damage-monster", handleDamageMonster);
     return () => {
       socket.off("join-success", handleJoinSuccess);
       socket.off("player-join", handlePlayerJoin);
     };
   }, [roomId]);
+
+  useEffect(() => {
+    socket.emit("solve-problem", roomId, socket.id, monsterHealth);
+  }, [monsterHealth]);
   return (
     <>
       {isCountdown ? (
-        <div className="top-0 left-0 absolute w-full h-full bg-neutral-900/80 flex justify-center text-center items-center z-50">
+        <div className="top-0 left-0 absolute w-full h-full bg-neutral-900/80 flex flex-col justify-center text-center items-center z-50">
           <CountdownTimer onCountdownEnd={handleCountdownEnd} />
+          <img
+            width={200}
+            height={200}
+            src={`/misc/fire.gif`}
+            alt="Fire."
+            style={{
+              imageRendering: "pixelated",
+            }}
+          />
         </div>
       ) : (
         <DefaultLayout>
           {!isGameStarted ? (
             <>
+              <motion.img
+                width={100}
+                height={100}
+                src={`/doom_guy.webp`}
+                alt="Doom guy."
+                style={{
+                  imageRendering: "pixelated",
+                }}
+                initial={{
+                  y: 0,
+                }}
+                animate={{
+                  y: [6, -6, 6],
+                }}
+                transition={{
+                  repeat: Infinity,
+                  duration: 2,
+                  ease: "easeInOut",
+                }}
+              />
+              <div className="my-4" />
               <h1
                 className="text-4xl font-bold text-center"
                 style={{
@@ -148,35 +201,64 @@ function RoomComponent() {
               >
                 {heading}
               </h1>
-              <h2>{!search && "Waiting for host"}</h2>
+              <div className="my-2" />
+              <p className="text-neutral-400">
+                {!search && "Waiting for host"}
+              </p>
               <div className="my-4" />
               <button
-                className="px-4 py-2 text-neutral-400 bg-neutral-700"
+                className="px-4 py-2 text-neutral-400 bg-neutral-700 hover:bg-neutral-800 active:bg-neutral-600 flex items-center"
                 onClick={handleCopyLink}
-              >{`${roomLink} 📋`}</button>
+              >
+                <span className="block text-ellipsis whitespace-nowrap overflow-hidden max-w-96">{`${roomLink}`}</span>
+                📋
+              </button>
               <div className="my-4" />
               {search && !isWaiting && (
-                <button
-                  className="px-4 py-1 bg-yellow-300 text-black"
-                  onClick={handleClickStart}
-                >
-                  Start
-                </button>
+                <Button onClick={handleClickStart}>Start</Button>
               )}
+
+              <div className="my-4" />
+
+              <Loader />
             </>
           ) : (
             <>
-              <img
-                width={100}
-                height={100}
-                src={`/monsters/${renderedProblem.image}`}
-                alt="Monster."
-                style={{
-                  imageRendering: "pixelated",
-                  filter: "sepia(100%) hue-rotate(-50deg) saturate(1000%)",
-                }}
-              />
-              <h1 className="text-4xl font-bold text-center">{`${renderedProblem.numOne} + ${renderedProblem.numTwo}`}</h1>
+              <div className="mb-4 flex items-center justify-center text-center gap-4">
+                <motion.img
+                  width={100}
+                  height={100}
+                  src={`/monsters/${renderedProblem.image}`}
+                  alt="Monster."
+                  style={{
+                    imageRendering: "pixelated",
+                    filter:
+                      "brightness(0) saturate(100%) invert(26%) sepia(75%) saturate(4552%) hue-rotate(349deg) brightness(90%) contrast(111%)",
+                  }}
+                  initial={{
+                    y: 0,
+                  }}
+                  animate={{
+                    y: [6, -6, 6],
+                  }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 2,
+                    ease: "easeInOut",
+                  }}
+                />
+                <HealthBar health={monsterHealth} />
+                <motion.span
+                  className="text-red-500"
+                  animate={hitAnimControls}
+                  initial={{
+                    opacity: 0,
+                  }}
+                >
+                  -10
+                </motion.span>
+              </div>
+              <h1 className="text-4xl font-bold text-center font-sans">{`${renderedProblem.numOne} + ${renderedProblem.numTwo}`}</h1>
               <div className="my-4" />
               <motion.form
                 className="bg-neutral-700"
@@ -199,6 +281,12 @@ function RoomComponent() {
               </motion.form>
               <div className="my-4" />
               <span>Problem Number {currentProblem + 1}</span>
+              <div className="my-8" />
+
+              <div className="text-center scale-75">
+                <h2>Player Two Monster</h2>
+                <HealthBar health={oppositeMonsterHealth} />
+              </div>
             </>
           )}
         </DefaultLayout>
